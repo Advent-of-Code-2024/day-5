@@ -3,6 +3,7 @@ const input:string = '57|24\n64|37\n64|45\n19|47\n19|45\n19|95\n98|57\n98|37\n98
 
 // Table cells for displaying data
 const pt1MiddleSumTD:HTMLTableCellElement = <HTMLTableCellElement>document.getElementById('pt1OrderedMiddleSum');
+const pt2MiddleSumTD:HTMLTableCellElement = <HTMLTableCellElement>document.getElementById('pt2OrderedMiddleSum');
 
 /**************/
 /*   Part 1   */
@@ -11,8 +12,6 @@ const [ rules, updates ] = input.split('\n\n');
 
 const rulesArray:string[] = rules.split('\n');
 const updatesArray:string[] = updates.split('\n');
-
-type RuleTuple = [string,string];
 
 /**
  * @param {string[]} rules - Strings in the format: num1|num2 where num1 must precede num2
@@ -63,3 +62,61 @@ let orderedUpdates:string[] = findOrderedUpdates(rulesArray,updatesArray);
 let middleSum:number = findMiddleSum(orderedUpdates);
 
 pt1MiddleSumTD.textContent = middleSum.toString();
+
+/**************/
+/*   Part 2   */
+/**************/
+/**
+ * @param {string[]} rules - Strings in the format: num1|num2 where num1 must precede num2
+ * @param {string[]} updates - Strings in the format #,#,#,#,#... that are checked agains rules
+ * 
+ * @return {string[]} Updates that violate the rules
+ */
+function findUnorderedUpdates(rules:string[],updates:string[]):string[] {
+  let unorderedUpdates:string[] = [];
+  let rulesTest:string = rules.map(rule => '('.concat(rule.split('|').reverse().join('.*'),')')).join('|')
+  
+  let violationRegEx:RegExp = new RegExp(rulesTest);
+
+  for ( let pages of updates ) {
+    let isUnordered:boolean = violationRegEx.test(pages);
+
+    isUnordered && unorderedUpdates.push(pages);
+  }
+
+  return unorderedUpdates;
+}
+function orderUpdate(rules:string[],update:string):string {
+  for ( let rule of rules ) {
+    let [num1, num2] = rule.split('|');
+    let pageNums:string[] = update.split(',');
+    let indexNum1:number = pageNums.indexOf(num1);
+    let indexNum2:number = pageNums.indexOf(num2);
+
+    if ( indexNum1 > -1 && indexNum2 > -1 ) {
+      if ( indexNum1 > indexNum2 ) {
+        pageNums[indexNum1] = num2;
+        pageNums[indexNum2] = num1;
+
+        update = orderUpdate(rules,pageNums.join(','));
+      }
+    }
+  }
+
+  return update;
+}
+function orderUpdates(rules:string[],unorderedUpdates:string[]):string[] {
+  let orderedUpdates:string[] = [];
+
+  for ( let unorderedUpdate of unorderedUpdates ) {
+    let updatedOrder:string = orderUpdate(rules,unorderedUpdate);
+    orderedUpdates.push(updatedOrder);
+  }
+
+  return orderedUpdates;
+}
+let unorderedUpdates:string[] = findUnorderedUpdates(rulesArray,updatesArray);
+let newOrderedUpdates:string[] = orderUpdates(rulesArray,unorderedUpdates);
+let middleSum2:number = findMiddleSum(newOrderedUpdates); 
+
+pt2MiddleSumTD.textContent = middleSum2.toString();
