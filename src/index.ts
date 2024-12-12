@@ -22,23 +22,14 @@ type RuleTuple = [string,string];
  */
 function findOrderedUpdates(rules:string[],updates:string[]):string[] {
   let orderedUpdates:string[] = [];
+  let rulesTest:string = rules.map(rule => '('.concat(rule.split('|').reverse().join('.*'),')')).join('|')
+  
+  let violationRegEx:RegExp = new RegExp(rulesTest);
 
   for ( let pages of updates ) {
-    let pageNums:string[] = pages.split(',');
-    let isOrdered:boolean = true;
-    for ( let ruleStr of rules ) {
-      let rule:RuleTuple = ruleStr.split('|') as RuleTuple;
-      let rule1Index:number = pageNums.indexOf(rule[0]);
-      let rule2Index:number = pageNums.indexOf(rule[1]);
+    let isUnordered:boolean = violationRegEx.test(pages);
 
-      if ( ( rule1Index > -1 ) && ( rule2Index > -1 ) ) {
-        if ( rule1Index > rule2Index ) {
-          isOrdered = false;
-          break;
-        }
-      }
-    }
-    isOrdered && orderedUpdates.push(pages);
+    !isUnordered && orderedUpdates.push(pages);
   }
 
   return orderedUpdates;
